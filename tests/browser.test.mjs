@@ -71,7 +71,8 @@ test('a browser plays two synthetic sessions, retries a lost response and sees t
         })));
       }
       if (path.endsWith('/gca_events')) {
-        return answer([...received.get(input.p_session).values()].map(e => ({ ...e, event_type: e.type })));
+        const events = [...received.get(input.p_session).values()].filter(e => e.seq > input.p_after);
+        return answer(events.slice(0, 200).map(e => ({ ...e, event_type: e.type })));
       }
       return route.fulfill({ status: 404, json: { message: 'Unexpected route ' + path }, headers });
     });
@@ -140,6 +141,18 @@ test('a browser plays two synthetic sessions, retries a lost response and sees t
     const contents = await readFile(await file.path(), 'utf8');
     assert.match(contents, /Synthetic Alice/);
     assert.match(contents, /Synthetic Bob/);
+
+    const cardDownload = teacher.waitForEvent('download');
+    await teacher.getByRole('button', { name: 'Export card plays' }).click();
+    const cardFile = await cardDownload;
+    assert.equal(cardFile.suggestedFilename(), 'ghost-coin-card-plays.csv');
+    const cards = await readFile(await cardFile.path(), 'utf8');
+    const [header, ...plays] = cards.trimEnd().split('\r\n');
+    assert.match(header, /"turn","player","actor","card","before_heads","before_tails","after_heads","after_tails"/);
+    assert.equal(plays.length, 6);
+    assert.equal(plays.filter(row => row.includes('"2","B","computer"')).length, 2);
+    assert.ok(plays.every(row => row.endsWith('"resolved","1","H"')));
+    assert.doesNotMatch(cards, /Synthetic Alice|Synthetic Bob/);
     await staff.close();
   } finally {
     await browser.close();

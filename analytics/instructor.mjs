@@ -1,5 +1,5 @@
 import { createSupabase } from './supabase.mjs';
-import { csv, duration } from './reports.mjs';
+import { cardPlayColumns, cardPlayRows, csv, duration } from './reports.mjs';
 
 const $ = selector => document.querySelector(selector);
 const classes = $('#class-select');
@@ -187,16 +187,27 @@ async function saveClass(rotate = false) {
   show('Class settings saved.');
 }
 
-async function exportClass(includeEvents) {
+async function* sessionEvents(sessionId) {
+  let after = 0;
+  for (;;) {
+    const events = await client.rpc('gca_events', { p_session: sessionId, p_after: after });
+    yield* events;
+    if (events.length < eventPageSize) return;
+    after = events.at(-1).seq;
+  }
+}
+
+async function exportClass(kind) {
   const classId = classes.value;
   const summary = ['participant_id', 'session_id', 'name', 'partner', 'shared', 'session_started', 'first_saved', 'last_saved', 'completed_at', 'rounds_required_at_completion', 'visible_ms', 'estimated_active_ms', 'visible_idle_ms', 'hidden_ms', 'resolved_rounds', 'abandoned_rounds', 'restarts', 'human_moves', 'computer_moves', 'sequences', 'session_state'];
   const detail = ['session_id', 'seq', 'event_id', 'round_id', 'event_type', 'elapsed_ms', 'client_at', 'received_at', 'payload'];
-  const rows = [includeEvents ? detail : summary];
+  const headers = { summary, events: detail, 'card-plays': cardPlayColumns };
+  const rows = [headers[kind]];
   show('Preparing CSV…');
   for (let offset = 0; ; offset += summaryPageSize) {
     const sessions = await client.rpc('gca_sessions', { p_class: classId, p_offset: offset, p_limit: summaryPageSize });
     for (const s of sessions) {
-      if (!includeEvents) {
+      if (kind === 'summary') {
         rows.push([
           s.participant_id, s.session_id, s.student_name, s.partner_name, Boolean(s.partner_name), s.session_started,
           s.first_recorded, s.last_recorded, s.completed_at, s.completion_rounds,
@@ -206,22 +217,22 @@ async function exportClass(includeEvents) {
         ]);
         continue;
       }
-      let after = 0;
-      for (;;) {
-        const events = await client.rpc('gca_events', { p_session: s.session_id, p_after: after });
-        for (const e of events) {
+      const roundEvents = [];
+      for await (const e of sessionEvents(s.session_id)) {
+        if (kind === 'events') {
           rows.push([s.session_id, e.seq, e.event_id, e.round_id, e.event_type, e.elapsed_ms, e.client_at, e.received_at, JSON.stringify(e.payload)]);
+        } else if (e.event_type === 'card_played' || e.event_type === 'round_resolved' || e.event_type === 'round_restart') {
+          roundEvents.push(e);
         }
-        if (events.length < eventPageSize) break;
-        after = events.at(-1).seq;
       }
+      if (kind === 'card-plays') rows.push(...cardPlayRows(s, roundEvents));
     }
     if (sessions.length < summaryPageSize) break;
   }
   const url = URL.createObjectURL(new Blob([csv(rows)], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ghost-coin-${includeEvents ? 'events' : 'summary'}.csv`;
+  link.download = `ghost-coin-${kind}.csv`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   show('CSV ready.');
@@ -297,8 +308,9 @@ $('#rotate').addEventListener('click', () => {
 $('#refresh').addEventListener('click', () => run(() => loadSessions()));
 $('#more-sessions').addEventListener('click', () => run(() => loadSessions(false)));
 $('#more-events').addEventListener('click', () => run(loadEvents));
-$('#summary-export').addEventListener('click', () => run(() => exportClass(false)));
-$('#event-export').addEventListener('click', () => run(() => exportClass(true)));
+$('#summary-export').addEventListener('click', () => run(() => exportClass('summary')));
+$('#event-export').addEventListener('click', () => run(() => exportClass('events')));
+$('#card-export').addEventListener('click', () => run(() => exportClass('card-plays')));
 $('#delete-participant').addEventListener('click', () => {
   if (!selectedSession || !confirm('Permanently delete this participant, all their sessions, events, and completion credit?')) return;
   void run(async () => {
