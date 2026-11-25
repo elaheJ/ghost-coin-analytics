@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://*.supabase.co http://localhost:54321 http://127.0.0.1:54321; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Ghost Coin · Instructor dashboard</title>
+<link rel="stylesheet" href="./analytics/instructor.css">
+<script type="module" src="./analytics/instructor.mjs"></script>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="brand">SpookyQubits</p><h1>Ghost Coin instructor dashboard</h1></div>
+    <button id="logout" type="button" hidden>Sign out</button>
+  </header>
+  <p id="status" role="status" aria-live="polite"></p>
+  <section id="login" aria-labelledby="login-title">
+    <h2 id="login-title">Instructor sign-in</h2>
+    <form id="login-form">
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password"></label>
+      <button class="primary" name="method" value="password">Sign in</button>
+      <button name="method" value="link">Email a sign-in link</button>
+    </form>
+  </section>
+  <div id="dashboard" hidden>
+    <section aria-labelledby="classes-title">
+      <h2 id="classes-title">Classes</h2>
+      <div class="actions">
+        <label>Class <select id="class-select"><option value="">Select a class</option></select></label>
+        <button id="create-class" type="button">New class</button>
+      </div>
+      <form id="class-form" hidden>
+        <label>Class name <input name="label" maxlength="80" required></label>
+        <label>Rounds for credit <input name="rounds" type="number" min="1" max="20" value="1" required></label>
+        <label class="check"><input name="open" type="checkbox" checked> Accept enrollment and saves</label>
+        <button class="primary">Save class</button>
+        <button id="rotate" type="button" hidden>Rotate class code</button>
+      </form>
+      <p id="new-code" hidden></p>
+    </section>
+    <section id="reports" aria-labelledby="reports-title" hidden>
+      <h2 id="reports-title">Class sessions</h2>
+      <p>Visible time covers Level 2 while the tab is visible. Estimated active time extends to 60 seconds after a game action. Visible idle time begins after that. Hidden time is reported separately.</p>
+      <div class="actions">
+        <button id="refresh" type="button">Refresh</button>
+        <button id="summary-export" type="button">Export class summary</button>
+        <button id="event-export" type="button">Export class events</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Participant</th><th>Completion</th><th>First / last saved</th><th>Visible / active / idle / hidden</th><th>Resolved / abandoned / restarts</th><th>Human / computer moves</th><th>Session state</th><th>Timeline</th></tr></thead>
+        <tbody id="sessions"></tbody>
+      </table></div>
+      <button id="more-sessions" type="button" hidden>Show more sessions</button>
+    </section>
+    <section id="detail" aria-labelledby="detail-title" hidden>
+      <h2 id="detail-title"></h2>
+      <p id="detail-id"></p>
+      <h3>Completed sequences</h3>
+      <ul id="sequences"></ul>
+      <h3>Chronological activity</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>Elapsed time</th><th>Action</th><th>Round</th><th>Details</th></tr></thead>
+        <tbody id="events"></tbody>
+      </table></div>
+      <div class="actions">
+        <button id="more-events" type="button" hidden>Show more events</button>
+        <button id="delete-participant" type="button" class="danger">Delete participant and activity</button>
+      </div>
+    </section>
+  </div>
+  <noscript>This dashboard requires JavaScript.</noscript>
+</main>
+</body>
+</html>
