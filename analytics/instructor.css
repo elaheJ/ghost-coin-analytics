@@ -1,0 +1,30 @@
+:root { color-scheme: light; font: 16px/1.5 "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif; color: #202435; background: #faf7f1; --brand: #b60000; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+main { max-width: 82rem; padding: clamp(1rem, 4vw, 3.5rem); margin-inline: auto; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 1px solid #d8d0c5; padding-bottom: 1rem; }
+h1, h2, h3, .brand { margin: 0; }
+h1 { font-size: clamp(1.5rem, 4vw, 2.4rem); line-height: 1.15; }
+.brand { font-weight: 700; color: var(--brand); margin-bottom: .25rem; }
+section { margin-block: 1rem; border: 1px solid #ded7cf; background: #fff; border-radius: .65rem; padding: clamp(.8rem, 2vw, 1.5rem); }
+section > p, #status { margin: .5rem 0; }
+#status { min-height: 1.5em; }
+form, .actions { display: flex; align-items: end; gap: .6rem; flex-wrap: wrap; margin-block: .8rem; }
+label { display: grid; gap: .3rem; font-weight: 650; }
+label.check { display: flex; align-items: center; margin: .5rem .25rem; }
+input, select, button { font: inherit; padding: .42rem .68rem; border: 1px solid #847c85; border-radius: .35rem; color: inherit; background: #fff; }
+button { cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+button:hover { background: #f4eee9; }
+button.primary { color: white; background: var(--brand); border-color: var(--brand); }
+button.primary:hover { background: #960000; }
+button.danger { color: #970b22; border-color: currentColor; }
+#new-code { padding: .6rem .75rem; background: #f8f1e4; overflow-wrap: anywhere; }
+.scroll { overflow-x: auto; margin: .65rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .91rem; }
+th, td { text-align: left; vertical-align: top; padding: .65rem .55rem; border-bottom: 1px solid #ded7cf; }
+thead { background: #f7f3ec; }
+td pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; min-width: 13rem; }
+code, pre { font-family: ui-monospace, monospace; }
+@media(max-width: 520px) { header { align-items: start; } form label:not(.check) { width: 100%; } }
