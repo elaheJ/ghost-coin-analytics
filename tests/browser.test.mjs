@@ -153,6 +153,21 @@ test('a browser plays two synthetic sessions, retries a lost response and sees t
     assert.equal(plays.filter(row => row.includes('"2","B","computer"')).length, 2);
     assert.ok(plays.every(row => row.endsWith('"resolved","1","H"')));
     assert.doesNotMatch(cards, /Synthetic Alice|Synthetic Bob/);
+
+    await teacher.getByRole('button', { name: 'View quantitative report' }).click();
+    const report = teacher.getByRole('region', { name: 'Quantitative class report' });
+    await report.waitFor();
+    assert.deepEqual(await report.locator('dd').allTextContents(), ['2', '4', '2', '2 / 2']);
+    assert.equal(await report.locator('.report-bar-row').count(), 4);
+    await report.getByText('Ghost', { exact: true }).waitFor();
+    await report.getByText('Human 4 · Computer 0', { exact: true }).waitFor();
+    await report.getByText('Automatic reveal (2)', { exact: true }).waitFor();
+    await report.getByText('Heads probability', { exact: true }).waitFor();
+    assert.equal(await report.locator('tbody tr').count(), new Set([...received.values()].map(events =>
+      [...events.values()].find(e => e.type === 'round_resolved').payload.cards.join(',')
+    )).size);
+    await teacher.locator('#class-select').selectOption('');
+    await report.waitFor({ state: 'hidden' });
     await staff.close();
   } finally {
     await browser.close();
